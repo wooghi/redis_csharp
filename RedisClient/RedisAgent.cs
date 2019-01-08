@@ -21,9 +21,15 @@ namespace RedisClient
 		}
 
 		//ex
-		public async Task<bool> DoSomething(long id, int val)
+		public async Task<bool> HashSet(long id, int val)
 		{
-			return await this.Execute(async () => await this.DoSomethingImpl(id, val));
+			return await this.Execute(async () => await this.HashSetImpl(id, val));
+		}
+
+		public async Task SetAdd(long id, int val)
+		{
+			var key = this.GetSomethingKey(id, val);
+			await this.Execute(async () => await this.Database.SetAddAsync(key, val, CommandFlags.FireAndForget));
 		}
 
 		public string GetSomethingKey(long id, int val)
@@ -31,14 +37,14 @@ namespace RedisClient
 			return string.Format("{0}:something:propertyName:{{{1}}}", id, val);
 		}
 
-		private async Task<bool> DoSomethingImpl(long id, int val)
+		private async Task<bool> HashSetImpl(long id, int val)
 		{
 			bool result = false;
 			string key = this.GetSomethingKey(id, val);
 
 			var trans = this.Database.CreateTransaction();
 
-			trans.AddCondition(Condition.HashEqual(key, "finished", false));
+			////trans.AddCondition(Condition.HashEqual(key, "finished", false));
 			trans.HashIncrementAsync(key, "currentPlayerCount");
 
 			result = await trans.ExecuteAsync();
